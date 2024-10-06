@@ -1,5 +1,5 @@
 basePath: /
-host: https://go-sample-backend-deployed.onrender.com:7070
+host: go-sample-backend-deployed.onrender.com:7070
 info:
   contact:
     email: support@swaager.import
