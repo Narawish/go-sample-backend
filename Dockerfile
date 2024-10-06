@@ -16,9 +16,9 @@ COPY . .
 
 # Set ENV variables for Render Deployment
 
-ENV DB_HOST=pgdb
+ENV DB_HOST=dpg-cs158la3esus739apur0-a
 ENV DB_PORT=5432
-ENV DB_NAME=gosampledb
+ENV DB_NAME=gosampledb_wxy8
 ENV DB_USER=gosampledb_user
 ENV DB_PASSWORD=TzHHTg8FLga0aWAK9UVzuHnq3P2tzioL
 ENV DB_SSLMODE=disable
