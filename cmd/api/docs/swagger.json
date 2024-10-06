@@ -14,7 +14,7 @@
         },
         "version": "1.0"
     },
-    "host": "go-sample-backend-deployed.onrender.com:7070",
+    "host": "go-sample-backend-deployed.onrender.com",
     "basePath": "/",
     "paths": {
         "/api/v1/": {
