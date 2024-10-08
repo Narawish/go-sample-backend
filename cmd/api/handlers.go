@@ -16,6 +16,117 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// UserRegisterPayload is the request payload for user login
+// swagger:parameters login
+type UserLoginPayload struct {
+	// Required: true
+	// Example: "
+	Email string `json:"email"`
+	// Required: true
+	// Example: "password123"
+	Password string `json:"password"`
+}
+
+// UserRegisterPayload is the request payload for user registration
+// swagger:parameters register
+type UserRegisterPayload struct {
+	// Required: true
+	// Example: "John"
+	FirstName string `json:"first_name"`
+	// Required: true
+	// Example: "Doe"
+	LastName string `json:"last_name"`
+	// Required: true
+	// Example: "john@example.com"
+	Email string `json:"email"`
+	// Required: true
+	// Example: "password123"
+	Password string `json:"password"`
+}
+
+// login ทำการ login และสร้าง TokenPairs
+// @Summary Authentication และสร้าง TokenPairs
+// @Description รับข้อมูลอีเมลและรหัสผ่านของผู้ใช้และตรวจสอบความถูกต้อง หลังจากนั้นสร้าง JWT TokenPairs
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param requestPayload body UserLoginPayload true "User credentials" example({"email": "string", "password": "string"})
+// @Success 202 {object} map[string]interface{} "Token pairs" example({"access_token": "string", "refresh_token": "string"})
+// @Failure 400 {object} map[string]interface{} "Bad Request" example({"error": "Bad Request"})
+// @Failure 500 {object} map[string]interface{} "Internal Server Error" example({"error": "Internal Server Error"})
+// @Router /api/v1/login [post]
+func (app *application) login(w http.ResponseWriter, r *http.Request) {
+	// read json payload (อ่านข้อมูล JSON ที่ส่งมา)
+	var requestPayload UserLoginPayload
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// validate user against database (ตรวจสอบข้อมูลผู้ใช้จากฐานข้อมูล)
+	user, err := app.DB.GetUserByEmail(requestPayload.Email)
+	if err != nil {
+		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
+	}
+
+	// check password against hash (ตรวจสอบรหัสผ่าน)
+	valid, err := user.PasswordMatches(requestPayload.Password)
+	if err != nil || !valid {
+		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
+	}
+
+	// create a jwt user (สร้าง jwt user)
+	u := jwtUser{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	// generate tokens (สร้างโทเคน)
+	tokens, err := app.auth.GenerateTokenPair(&u)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// set refresh token cookie (ตั้งค่า cookie สำหรับ refresh token)
+	refreshCookie := app.auth.GetRefreshCookie(tokens.RefreshToken)
+	http.SetCookie(w, refreshCookie)
+
+	// create the response payload (สร้าง payload สำหรับ response)
+	responsePayload := struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		User         struct {
+			ID        int    `json:"id"`
+			FirstName string `json:"first_name"`
+			LastName  string `json:"last_name"`
+			Email     string `json:"email"`
+		} `json:"user"`
+	}{
+		AccessToken:  tokens.Token, // แก้ไขให้ตรงกับฟิลด์ Token ของคุณ
+		RefreshToken: tokens.RefreshToken,
+		User: struct {
+			ID        int    `json:"id"`
+			FirstName string `json:"first_name"`
+			LastName  string `json:"last_name"`
+			Email     string `json:"email"`
+		}{
+			ID:        user.ID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Email:     user.Email,
+		},
+	}
+
+	// write the response as JSON (เขียน response เป็น JSON)
+	app.writeJSON(w, http.StatusAccepted, responsePayload)
+}
+
 func (app *application) Hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World! %s:%d", app.Domain, port)
 }

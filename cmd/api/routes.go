@@ -30,7 +30,7 @@ func (app *application) routes() http.Handler {
 		r.Get("/about", app.About)
 
 		// Authenticate route
-		r.Post("/authenticate", app.authenticate)
+		r.Post("/login", app.login)
 		r.Get("/refresh", app.refreshToken)
 		r.Get("/logout", app.logout)
 
