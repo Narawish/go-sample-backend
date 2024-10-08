@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserRegisterPayload is the request payload for user login
@@ -125,6 +126,65 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 
 	// write the response as JSON (เขียน response เป็น JSON)
 	app.writeJSON(w, http.StatusAccepted, responsePayload)
+}
+
+// register เพิ่มผู้ใช้ใหม่ในระบบ
+// @Summary เพิ่มผู้ใช้ใหม่
+// @Description รับข้อมูลผู้ใช้ใหม่และบันทึกลงในระบบ
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param requestPayload body UserRegisterPayload true "User registration data" example({"first_name": "John", "last_name": "Doe", "email": "john@example.com", "password": "password123"})
+// @Success 201 {object} map[string]string "message" example({"message": "User created"})
+// @Failure 400 {object} map[string]string "Bad Request" example({"error": "Bad Request"})
+// @Failure 500 {object} map[string]string "Internal Server Error" example({"error": "Internal Server Error"})
+// @Router /api/v1/register [post]
+func (app *application) register(w http.ResponseWriter, r *http.Request) {
+	var requestPayload UserRegisterPayload
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// ตรวจสอบว่าอีเมลนี้มีอยู่แล้วในระบบหรือไม่
+	existingUser, _ := app.DB.GetUserByEmail(requestPayload.Email)
+	if existingUser != nil {
+		app.errorJSON(w, errors.New("email already exists"), http.StatusBadRequest)
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestPayload.Password), bcrypt.DefaultCost)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Create new user
+	user := models.User{
+		FirstName: requestPayload.FirstName,
+		LastName:  requestPayload.LastName,
+		Email:     requestPayload.Email,
+		Password:  string(hashedPassword),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Insert user to database
+	_, err = app.DB.InsertUser(user)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	resp := JSONResponse{
+		Error:   false,
+		Message: "User created",
+	}
+
+	app.writeJSON(w, http.StatusCreated, resp)
 }
 
 func (app *application) Hello(w http.ResponseWriter, r *http.Request) {
