@@ -16,11 +16,27 @@ COPY . .
 
 # Set ENV variables for Render Deployment
 
-ENV DB_HOST=dpg-cs158la3esus739apur0-a
+# ENV DB_HOST=dpg-cs158la3esus739apur0-a
+# ENV DB_PORT=5432
+# ENV DB_NAME=gosampledb_wxy8
+# ENV DB_USER=gosampledb_user
+# ENV DB_PASSWORD=TzHHTg8FLga0aWAK9UVzuHnq3P2tzioL
+# ENV DB_SSLMODE=disable
+# ENV DB_TIMEZONE=UTC
+# ENV DB_CONNECT_TIMEOUT=5
+# ENV JWT_SECRET=verysecret
+# ENV JWT_ISSUER=example.com
+# ENV JWT_AUDIENCE=example.com
+# ENV COOKIE_DOMAIN=localhost
+# ENV DOMAIN=localhost
+# ENV API_KEY=b41447e6319d1cd467306735632ba733
+
+# Local development
+ENV DB_HOST=pgdb
 ENV DB_PORT=5432
-ENV DB_NAME=gosampledb_wxy8
-ENV DB_USER=gosampledb_user
-ENV DB_PASSWORD=TzHHTg8FLga0aWAK9UVzuHnq3P2tzioL
+ENV DB_NAME=gosampledb
+ENV DB_USER=narawishing
+ENV DB_PASSWORD=Narawishing
 ENV DB_SSLMODE=disable
 ENV DB_TIMEZONE=UTC
 ENV DB_CONNECT_TIMEOUT=5
